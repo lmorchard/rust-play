@@ -2,47 +2,30 @@ extern crate rand;
 
 use std::io;
 use std::error::Error;
-use std::fmt;
+// use std::fmt;
 use std::cmp::Ordering;
 use rand::Rng;
-
-#[derive(Debug)]
-struct GuessError {
-    details: String
-}
-impl GuessError {
-    fn new(msg: &str) -> GuessError {
-        GuessError { details: msg.to_string() }
-    }
-}
-impl fmt::Display for GuessError {
-    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
-        write!(f, "{}", self.details)
-    }
-}
-impl Error for GuessError {
-    fn description(&self) -> &str {
-        &self.details
-    }
-}
 
 pub struct Guess {
     value: u32,
 }
 
 impl Guess {
-    pub fn new(value: u32) -> Result<Guess, GuessError> {
+    pub fn new(value: u32) -> Result<Guess, String> {
         if value < 1 || value > 100 {
-            return Result(GuessError::new(
-                format!("Guess value must be between 1 and 100, got {}", value)
-            ));
+            return Err(format!("Guess value must be between 1 and 100, got {}", value));
         }
-
-        Result(Guess { value })
+        Ok(Guess { value })
     }
     pub fn value(&self) -> u32 {
         self.value
     }
+}
+
+fn get_guess() -> Result<u32, Box<Error>> {
+    let mut guess = String::new();
+    io::stdin().read_line(&mut guess)?;
+    Ok(Guess::new(guess.trim().parse()?)?.value)
 }
 
 fn main() {
@@ -53,17 +36,13 @@ fn main() {
   loop {
     println!("Please input your guess");
 
-    let mut guess = String::new();
-
-    io::stdin().read_line(&mut guess)
-      .expect("Failed to read line");
-
-    let guess: Guess = match guess.trim().parse() {
-      Ok(num)=> Guess::new(num),
-      Err(_) => continue,
+    let guess: u32 = match get_guess() {
+        Ok(num) => num,
+        Err(err) => {
+            println!("Guess invalid: {}", err);
+            continue;
+        },
     };
-
-    let guess = guess.value();
 
     println!("You guessed: {}", guess);
 
