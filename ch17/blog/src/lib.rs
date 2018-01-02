@@ -27,8 +27,8 @@ impl Post {
         }
     }
 
-    pub fn is_draft(&self) -> bool {
-        self.state.as_ref().unwrap().is_draft()
+    pub fn state_kind(&self) -> StateKind {
+        self.state.as_ref().unwrap().state_kind()
     }
 
     pub fn content(&self) -> &str {
@@ -36,12 +36,18 @@ impl Post {
     }
 }
 
+#[derive(Debug)]
+#[derive(PartialEq)]
+pub enum StateKind {
+    Draft,
+    PendingReview,
+    Published
+}
+
 trait State {
     fn request_review(self: Box<Self>) -> Box<State>;
     fn approve(self: Box<Self>) -> Box<State>;
-    fn is_draft(&self) -> bool {
-        false
-    }
+    fn state_kind(&self) -> StateKind;
     fn content<'a>(&self, _post: &'a Post) -> &'a str {
         ""
     }
@@ -52,9 +58,7 @@ trait State {
 struct Draft {}
 
 impl State for Draft {
-    fn is_draft(&self) -> bool {
-        true
-    }
+    fn state_kind(&self) -> StateKind { StateKind::Draft }
     fn request_review(self: Box<Self>) -> Box<State> {
         Box::new(PendingReview {})
     }
@@ -69,6 +73,7 @@ impl State for Draft {
 struct PendingReview {}
 
 impl State for PendingReview {
+    fn state_kind(&self) -> StateKind { StateKind::PendingReview }
     fn request_review(self: Box<Self>) -> Box<State> {
         self
     }
@@ -80,6 +85,7 @@ impl State for PendingReview {
 struct Published {}
 
 impl State for Published {
+    fn state_kind(&self) -> StateKind { StateKind::Published }
     fn request_review(self: Box<Self>) -> Box<State> {
         self
     }
@@ -112,11 +118,13 @@ mod tests {
     #[test]
     fn is_draft() {
         let mut post = Post::new();
-        assert_eq!(true, post.is_draft());
+        assert_eq!(StateKind::Draft, post.state_kind());
 
         post.request_review();
+        assert_eq!(StateKind::PendingReview, post.state_kind());
+
         post.approve();
-        assert_eq!(false, post.is_draft());
+        assert_eq!(StateKind::Published, post.state_kind());
     }
 
     #[test]
