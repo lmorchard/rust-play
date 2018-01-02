@@ -35,15 +35,22 @@ impl Post {
 trait State {
     fn request_review(self: Box<Self>) -> Box<State>;
     fn approve(self: Box<Self>) -> Box<State>;
-    fn content<'a>(&self, _post: &'a Post) -> &'a str { "" }
-    fn add_text(&mut self, _content: &mut String, _text: &str) { }
+    fn content<'a>(&self, _post: &'a Post) -> &'a str {
+        ""
+    }
+    fn add_text(&mut self, _content: &mut String, _text: &str) {
+    }
 }
 
 struct Draft {}
 
 impl State for Draft {
-    fn request_review(self: Box<Self>) -> Box<State> { Box::new(PendingReview {}) }
-    fn approve(self: Box<Self>) -> Box<State> { self }
+    fn request_review(self: Box<Self>) -> Box<State> {
+        Box::new(PendingReview {})
+    }
+    fn approve(self: Box<Self>) -> Box<State> {
+        self
+    }
     fn add_text(&mut self, content: &mut String, text: &str) {
         content.push_str(text);
     }
@@ -52,16 +59,26 @@ impl State for Draft {
 struct PendingReview {}
 
 impl State for PendingReview {
-    fn request_review(self: Box<Self>) -> Box<State> { self }
-    fn approve(self: Box<Self>) -> Box<State> { Box::new(Published {}) }
+    fn request_review(self: Box<Self>) -> Box<State> {
+        self
+    }
+    fn approve(self: Box<Self>) -> Box<State> {
+        Box::new(Published {})
+    }
 }
 
 struct Published {}
 
 impl State for Published {
-    fn request_review(self: Box<Self>) -> Box<State> { self }
-    fn approve(self: Box<Self>) -> Box<State> { self }
-    fn content<'a>(&self, post: &'a Post) -> &'a str { &post.content }
+    fn request_review(self: Box<Self>) -> Box<State> {
+        self
+    }
+    fn approve(self: Box<Self>) -> Box<State> {
+        self
+    }
+    fn content<'a>(&self, post: &'a Post) -> &'a str {
+        &post.content
+    }
 }
 
 #[cfg(test)]
