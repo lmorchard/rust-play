@@ -27,6 +27,10 @@ impl Post {
         }
     }
 
+    pub fn is_draft(&self) -> bool {
+        self.state.as_ref().unwrap().is_draft()
+    }
+
     pub fn content(&self) -> &str {
         self.state.as_ref().unwrap().content(&self)
     }
@@ -35,6 +39,9 @@ impl Post {
 trait State {
     fn request_review(self: Box<Self>) -> Box<State>;
     fn approve(self: Box<Self>) -> Box<State>;
+    fn is_draft(&self) -> bool {
+        false
+    }
     fn content<'a>(&self, _post: &'a Post) -> &'a str {
         ""
     }
@@ -45,6 +52,9 @@ trait State {
 struct Draft {}
 
 impl State for Draft {
+    fn is_draft(&self) -> bool {
+        true
+    }
     fn request_review(self: Box<Self>) -> Box<State> {
         Box::new(PendingReview {})
     }
@@ -97,6 +107,16 @@ mod tests {
 
         post.approve();
         assert_eq!("I ate a salad for lunch today", post.content());
+    }
+
+    #[test]
+    fn is_draft() {
+        let mut post = Post::new();
+        assert_eq!(true, post.is_draft());
+
+        post.request_review();
+        post.approve();
+        assert_eq!(false, post.is_draft());
     }
 
     #[test]
